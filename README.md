@@ -36,14 +36,53 @@ git clone <repo-url>
 cd AgentBlazer_Workshop
 ```
 
-### 2. Install backend dependencies
+---
 
-```bash
-pip install -r requirements.txt --break-system-packages
+### 2. Create a virtual environment
+
+**Windows (Command Prompt / PowerShell)**
+```cmd
+python -m venv venv
+venv\Scripts\activate
 ```
 
-### 3. Configure API keys
+**Linux / macOS**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
+> You should see `(venv)` at the start of your prompt once the environment is active.  
+> To deactivate at any time, run `deactivate`.
+
+---
+
+### 3. Install backend dependencies
+
+**Windows & Linux (run after activating the venv)**
+```bash
+pip install -r requirements.txt
+```
+
+> On Linux, if you encounter system package conflicts outside a venv, add `--break-system-packages`. Inside a virtual environment this flag is not needed.
+
+---
+
+### 4. Configure API keys
+
+**Windows (Command Prompt)**
+```cmd
+copy backend\.env.example backend\.env
+notepad backend\.env
+```
+
+**Windows (PowerShell)**
+```powershell
+Copy-Item backend\.env.example backend\.env
+notepad backend\.env
+```
+
+**Linux / macOS**
 ```bash
 cp backend/.env.example backend/.env
 nano backend/.env
@@ -56,7 +95,9 @@ GROQ_API_KEY=your_groq_key_here
 MISTRAL_API_KEY=your_mistral_key_here
 ```
 
-### 4. Install frontend dependencies
+---
+
+### 5. Install frontend dependencies
 
 ```bash
 cd frontend
@@ -68,7 +109,7 @@ cd ..
 
 ## Running the App
 
-Open two terminals from the project root.
+Open two terminals from the project root. Make sure the virtual environment is **activated in each terminal** before running.
 
 **Terminal 1 — Backend**
 ```bash
@@ -87,7 +128,7 @@ Open **http://localhost:5173** in your browser.
 
 ## Testing the Backend
 
-With the backend running, open a third terminal and run:
+With the backend running, open a third terminal (activate the venv first), then run:
 
 ```bash
 python test.py
@@ -137,6 +178,7 @@ AgentBlazer_Workshop/
     └── sessions/                  # Auto-saved session logs (JSON)
 ```
 
+---
 
 ## Tech Stack
 

@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 from backend.council import run_stage1, run_stage2, run_stage3
 app = FastAPI(title="LLM Council API", version="1.0.0")
