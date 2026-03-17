@@ -35,7 +35,7 @@ JUDGE_MODEL = {
 
 # --- Stage Prompts ---
 
-STAGE1_PROMPT = STAGE1_PROMPT = """You are a council member answering a question.
+STAGE1_PROMPT = """You are a council member answering a question.
 You must structure your response exactly as follows:
 
 ## Reasoning

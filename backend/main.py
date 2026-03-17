@@ -64,7 +64,6 @@ def health():
     return {
         "status": "ok",
         "groq_key_set":    bool(os.getenv("GROQ_API_KEY")),
-        "gemini_key_set":  bool(os.getenv("GEMINI_API_KEY")),
         "mistral_key_set": bool(os.getenv("MISTRAL_API_KEY")),
     }
 
