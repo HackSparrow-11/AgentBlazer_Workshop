@@ -599,6 +599,93 @@ body {
   min-height: 1.2em;
 }
 
+/* ── Model Selector ──────────────────────────────────── */
+.model-selector {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.model-selector-header {
+  margin-bottom: 1.5rem;
+}
+
+.model-selector-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.model-selector-header p {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.model-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.model-card:hover {
+  border-color: var(--border2);
+  background: rgba(24, 24, 31, 0.8);
+}
+
+.model-card.selected {
+  border-color: var(--accent);
+  background: rgba(0, 217, 255, 0.05);
+}
+
+.model-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.model-provider {
+  font-size: 0.75rem;
+  color: var(--text3);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.model-checkbox {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 20px;
+  color: var(--accent);
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.selection-count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text3);
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
 .loader-bar {
   width: 200px;
   height: 2px;

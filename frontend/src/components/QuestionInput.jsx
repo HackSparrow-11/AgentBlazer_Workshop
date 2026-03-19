@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ModelSelector from "./ModelSelector";
 
 const SAMPLE_QUESTIONS = [
   "What is recursion in programming?",
@@ -10,9 +11,12 @@ const SAMPLE_QUESTIONS = [
 
 export default function QuestionInput({ onSubmit }) {
   const [value, setValue] = useState("");
+  const [selectedModels, setSelectedModels] = useState(["llama", "compound"]); // Default selection
 
   function handleSubmit() {
-    if (value.trim()) onSubmit(value.trim());
+    if (value.trim() && selectedModels.length >= 2) {
+      onSubmit(value.trim(), selectedModels);
+    }
   }
 
   function handleKey(e) {
@@ -26,6 +30,11 @@ export default function QuestionInput({ onSubmit }) {
           <div className="question-label">SUBMIT YOUR QUESTION</div>
           <p className="question-hint">The council will reason independently, critique each other, then deliver a final verdict.</p>
         </div>
+
+        <ModelSelector 
+          selectedModels={selectedModels} 
+          onSelectionChange={setSelectedModels} 
+        />
 
         <textarea
           className="question-textarea"
@@ -42,7 +51,7 @@ export default function QuestionInput({ onSubmit }) {
           <button
             className="btn-primary"
             onClick={handleSubmit}
-            disabled={!value.trim()}
+            disabled={!value.trim() || selectedModels.length < 2}
           >
             Convene the Council
           </button>

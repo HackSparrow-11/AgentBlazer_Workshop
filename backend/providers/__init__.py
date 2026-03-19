@@ -1,8 +1,10 @@
-from . import groq, mistral
+from . import groq, mistral, gemini, openai
 
 PROVIDER_MAP = {
     "groq":    groq,
     "mistral": mistral,
+    "gemini":  gemini,
+    "openai":  openai,
 }
 
 

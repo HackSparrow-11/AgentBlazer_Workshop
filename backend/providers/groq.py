@@ -11,7 +11,7 @@ from backend.config import GROQ_API_URL
 
 def call(model: str, system_prompt: str, user_message: str) -> str:
     """
-    Send a chat completion request to the Groq API.
+        Send a chat completion request to the Groq API.
 
     Args:
         model:         Groq model string (e.g. 'llama-3.3-70b-versatile')

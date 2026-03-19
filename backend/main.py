@@ -65,6 +65,7 @@ SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 class Stage1Request(BaseModel):
     question: str
+    selected_models: list[str] = None  # List of model IDs to use
 
 class Stage2Request(BaseModel):
     question:  str
@@ -89,6 +90,8 @@ def health():
         "status": "ok",
         "groq_key_set":    bool(os.getenv("GROQ_API_KEY")),
         "mistral_key_set": bool(os.getenv("MISTRAL_API_KEY")),
+        "gemini_key_set":  bool(os.getenv("GEMINI_API_KEY")),
+        "openai_key_set":  bool(os.getenv("OPENAI_API_KEY")),
     }
 
 
@@ -98,13 +101,12 @@ def stage1(request: Stage1Request):
     Stage 1 — Independent Opinions.
     Each council model receives the question and responds
     with explicit reasoning followed by a final answer.
-    Models are called sequentially.
     """
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question must not be empty.")
 
     try:
-        responses = run_stage1(request.question)
+        responses = run_stage1(request.question, request.selected_models)
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e))
 
@@ -188,20 +190,90 @@ def get_session(session_id: str):
     """
     Returns the full content of a saved session by ID.
     """
-    for file in SESSIONS_DIR.glob("*.json"):
-        try:
-            with open(file) as f:
-                data = json.load(f)
-            if data.get("session_id") == session_id:
-                return data
-        except Exception:
-            continue
-    raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
+    file = _find_session_file(session_id)
+    if not file:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
+
+    try:
+        with open(file) as f:
+            return json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load session: {e}")
+
+
+@app.delete("/sessions/{session_id}")
+def delete_session(session_id: str):
+    """Delete a saved session."""
+    file = _find_session_file(session_id)
+    if not file:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
+
+    try:
+        file.unlink()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete session: {e}")
+
+    return {"deleted": session_id}
+
+
+@app.post("/sessions/{session_id}/rerun")
+def rerun_session(session_id: str):
+    """Rerun a saved session using the latest prompts and models."""
+    file = _find_session_file(session_id)
+    if not file:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
+
+    try:
+        with open(file) as f:
+            data = json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load session: {e}")
+
+    question = data.get("question")
+    if not question:
+        raise HTTPException(status_code=400, detail="Saved session is missing the question.")
+
+    try:
+        stage1 = run_stage1(question)
+        stage2 = run_stage2(question, stage1)
+        stage3 = run_stage3(question, stage1, stage2)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    new_session = {
+        "session_id": str(uuid.uuid4()),
+        "timestamp":  datetime.utcnow().isoformat(),
+        "question":   question,
+        "stage1":     stage1,
+        "stage2":     stage2,
+        "stage3":     stage3,
+        "rerun_of":   session_id,
+    }
+    _save_session(new_session)
+
+    return {
+        "session_id": new_session["session_id"],
+        "summary":    stage3["summary"],
+        "verdict":    stage3["verdict"],
+    }
 
 
 # ─────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────
+
+def _find_session_file(session_id: str):
+    """Return the file path for a saved session (or None if not found)."""
+    for file in SESSIONS_DIR.glob("*.json"):
+        try:
+            with open(file) as f:
+                data = json.load(f)
+            if data.get("session_id") == session_id:
+                return file
+        except Exception:
+            continue
+    return None
+
 
 def _save_session(session: dict):
     """

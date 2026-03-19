@@ -17,20 +17,29 @@ from backend.providers import call_provider
 # Stage 1 — Independent Opinions
 # ─────────────────────────────────────────────────────────
 
-def run_stage1(question: str) -> list[dict]:
+def run_stage1(question: str, selected_models: list[str] = None) -> list[dict]:
     """
     Send the question to each council model sequentially.
     Each model is prompted to show its reasoning before answering.
 
     Args:
         question: The user's question.
+        selected_models: List of model IDs to use. If None, uses all.
 
     Returns:
         List of dicts with keys: model_id, model_name, raw, reasoning, answer.
     """
+    from backend.config import COUNCIL_MODELS
+    
+    # Filter models based on selection
+    if selected_models:
+        models_to_use = [m for m in COUNCIL_MODELS if m["id"] in selected_models]
+    else:
+        models_to_use = COUNCIL_MODELS
+    
     responses = []
 
-    for member in COUNCIL_MODELS:
+    for member in models_to_use:
         raw = call_provider(
             provider=member["provider"],
             model=member["model"],
@@ -67,9 +76,13 @@ def run_stage2(question: str, stage1_responses: list[dict]) -> list[dict]:
     Returns:
         List of dicts with keys: reviewer_id, reviewer_name, raw, critique, ranking.
     """
+    # Only use models that provided responses in stage1
+    model_ids_in_responses = {r["model_id"] for r in stage1_responses}
+    reviewers = [m for m in COUNCIL_MODELS if m["id"] in model_ids_in_responses]
+    
     reviews = []
 
-    for member in COUNCIL_MODELS:
+    for member in reviewers:
         # Build anonymised peer responses — exclude the reviewer's own response
         peers = [r for r in stage1_responses if r["model_id"] != member["id"]]
         anonymised = _anonymise(peers)

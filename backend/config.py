@@ -8,6 +8,8 @@
 # --- API Base URLs ---
 GROQ_API_URL    = "https://api.groq.com/openai/v1/chat/completions"
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
+GEMINI_API_URL  = "https://generativelanguage.googleapis.com/v1beta/models"
+OPENAI_API_URL  = "https://api.openai.com/v1/chat/completions"
 
 # --- Council Models ---
 COUNCIL_MODELS = [
@@ -23,6 +25,18 @@ COUNCIL_MODELS = [
     "model":    "compound-beta",
     "provider": "groq",
 },
+    {
+        "id":       "gemini",
+        "name":     "Gemini 1.5 Pro",
+        "model":    "gemini-1.5-pro",
+        "provider": "gemini",
+    },
+    {
+        "id":       "gpt4",
+        "name":     "GPT-4",
+        "model":    "gpt-4",
+        "provider": "openai",
+    },
 ]
 
 # --- Judge Model ---

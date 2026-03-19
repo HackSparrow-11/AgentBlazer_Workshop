@@ -1,6 +1,7 @@
 import { useState } from "react";
 import QuestionInput from "./components/QuestionInput";
 import StageView from "./components/StageView";
+import SessionsView from "./components/SessionsView";
 import "./index.css";
 
 export default function App() {
@@ -11,10 +12,17 @@ export default function App() {
   const [stage3Data, setStage3Data] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+
+  const [view, setView] = useState("question"); // "question" | "sessions"
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
 
   const BASE = "http://localhost:8000";
 
-  async function handleSubmit(q) {
+  async function handleSubmit(q, selectedModels) {
     setQuestion(q);
     setError(null);
     setLoading(true);
@@ -23,7 +31,7 @@ export default function App() {
       const r = await fetch(`${BASE}/stage1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q, selected_models: selectedModels }),
       });
       if (!r.ok) throw new Error(await r.text());
       const data = await r.json();
@@ -82,6 +90,62 @@ export default function App() {
     setStage2Data(null);
     setStage3Data(null);
     setError(null);
+    setView("question");
+    setSessionLoaded(false);
+  }
+
+  async function loadSessions() {
+    setSessionsError(null);
+    setSessionsLoading(true);
+    setView("sessions");
+
+    try {
+      const r = await fetch(`${BASE}/sessions`);
+      if (!r.ok) throw new Error(await r.text());
+      const data = await r.json();
+      setSessions(data);
+    } catch (e) {
+      setSessionsError(e.message);
+      setSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }
+
+  async function loadSession(sessionId) {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const r = await fetch(`${BASE}/sessions/${sessionId}`);
+      if (!r.ok) throw new Error(await r.text());
+      const data = await r.json();
+
+      setQuestion(data.question);
+      setStage1Data(data.stage1);
+      setStage2Data(data.stage2);
+      setStage3Data(data.stage3);
+      setStage(1);
+      setSessionLoaded(true);
+      setView("question");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteSession(sessionId) {
+    try {
+      const r = await fetch(`${BASE}/sessions/${sessionId}`, {
+        method: "DELETE",
+      });
+      if (!r.ok) throw new Error(await r.text());
+      // Reload sessions after deletion
+      await loadSessions();
+    } catch (e) {
+      setError(e.message);
+    }
   }
 
   return (
@@ -95,16 +159,25 @@ export default function App() {
           </div>
           <p className="tagline">Multi-model reasoning — step by step</p>
         </div>
-        {stage > 0 && (
-          <div className="stage-indicator">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className={`stage-pip ${stage >= s ? "active" : ""} ${stage === s && loading ? "pulsing" : ""}`}>
-                <span className="pip-num">{s}</span>
-                <span className="pip-label">{["Opinions", "Review", "Verdict"][s - 1]}</span>
-              </div>
-            ))}
-          </div>
-        )}
+
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          {view === "sessions" ? (
+            <button className="btn-ghost" onClick={() => setView("question")}>Back</button>
+          ) : (
+            <button className="btn-ghost" onClick={loadSessions}>History</button>
+          )}
+
+          {stage > 0 && view === "question" && (
+            <div className="stage-indicator">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className={`stage-pip ${stage >= s ? "active" : ""} ${stage === s && loading ? "pulsing" : ""}`}>
+                  <span className="pip-num">{s}</span>
+                  <span className="pip-label">{["Opinions", "Review", "Verdict"][s - 1]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
 
       <main className="main">
@@ -113,8 +186,18 @@ export default function App() {
             <span className="error-tag">ERROR</span> {error}
           </div>
         )}
-        {stage === 0 && <QuestionInput onSubmit={handleSubmit} />}
-        {stage >= 1 && (
+        {view === "sessions" ? (
+          <SessionsView
+            sessions={sessions}
+            loading={sessionsLoading}
+            error={sessionsError}
+            onSelect={loadSession}
+            onDelete={deleteSession}
+            onBack={() => setView("question")}
+          />
+        ) : stage === 0 ? (
+          <QuestionInput onSubmit={handleSubmit} />
+        ) : (
           <StageView
             stage={stage}
             loading={loading}
@@ -122,9 +205,13 @@ export default function App() {
             stage1Data={stage1Data}
             stage2Data={stage2Data}
             stage3Data={stage3Data}
-            onNext={stage === 1 && !loading && stage1Data ? handleStage2
-                  : stage === 2 && !loading && stage2Data ? handleStage3
-                  : null}
+            onNext={sessionLoaded
+              ? () => setStage((s) => Math.min(3, s + 1))
+              : stage === 1 && !loading && stage1Data
+              ? handleStage2
+              : stage === 2 && !loading && stage2Data
+              ? handleStage3
+              : null}
             onReset={handleReset}
           />
         )}
